@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+import axios from 'axios';
+
 import { toast } from 'react-toastify';
 import { auth, googleAuthProvider } from '../../firebase';
 
@@ -25,6 +27,19 @@ const Login = ({ history }) => {
 		}
 	}, [user]);
 
+	//making request to backend
+	const createOrUpdateUser = async (authToken) => {
+		return await axios.post(
+			`${process.env.REACT_APP_API}/create-or-update-user`,
+			{},
+			{
+				headers: {
+					authToken,
+				},
+			}
+		);
+	};
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -33,14 +48,18 @@ const Login = ({ history }) => {
 			const { user } = result;
 			const idTokenResult = await user.getIdTokenResult();
 
-			dispatch({
-				type: 'LOGGED_IN_USER',
-				payload: {
-					email: user.email,
-					token: idTokenResult.token,
-				},
-			});
-			history.push('/');
+			createOrUpdateUser(idTokenResult.token)
+				.then((res) => console.log('create or update response', res))
+				.catch((err) => console.log(err));
+
+			// dispatch({
+			// 	type: 'LOGGED_IN_USER',
+			// 	payload: {
+			// 		email: user.email,
+			// 		token: idTokenResult.token,
+			// 	},
+			// });
+			// history.push('/');
 		} catch (error) {
 			toast.error(error.message);
 			setLoading(false);
